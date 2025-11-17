@@ -14,7 +14,7 @@ export async function initializeChatKitSession() {
     }
 
     const { clientSecret } = await response.json()
-    
+    //
     console.log("[v0] ChatKit session initialized successfully")
     
     return clientSecret

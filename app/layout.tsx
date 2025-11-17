@@ -11,7 +11,6 @@ const _geistMono = V0_Font_Geist_Mono({ subsets: ['latin'], weight: ["100","200"
 export const metadata: Metadata = {
   title: 'New Clarity Ai',
   description: '',
-  generator: 'v0.app',
   icons: {
     icon: [
       {

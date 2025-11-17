@@ -81,7 +81,7 @@ export default function ChatPage() {
         setChatKitReady(true) // Allow fallback to work
       }
     }
-
+    // Initialize ChatKit session when user is available
     if (user) {
       initChatKit()
     }
@@ -133,14 +133,30 @@ export default function ChatPage() {
       if (chatKitReady && sessionId) {
         responseContent = await sendMessageToChatKit(content, sessionId)
       } else {
-        // Fallback to previous API if ChatKit isn't ready
-        const response = await fetch("/api/chat", {
+        // Use FastAPI endpoint from environment variable
+        const fastApiUrl = process.env.NEXT_PUBLIC_FASTAPI_URL
+        
+        if (!fastApiUrl) {
+          throw new Error("NEXT_PUBLIC_FASTAPI_URL is not configured")
+        }
+
+        const response = await fetch(`${fastApiUrl}/api/chat`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ messages: currentChat.messages }),
+          body: JSON.stringify({ 
+            messages: currentChat.messages.map(msg => ({
+              role: msg.role,
+              content: msg.content
+            }))
+          }),
         })
+
+        if (!response.ok) {
+          throw new Error(`API request failed with status ${response.status}`)
+        }
+
         const data = await response.json()
-        responseContent = data.response || "I couldn't process that request. Please try again."
+        responseContent = data.message || data.response || "I couldn't process that request. Please try again."
       }
 
       setChats((prev) =>
