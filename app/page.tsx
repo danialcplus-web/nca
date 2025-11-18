@@ -7,7 +7,7 @@ export default function LandingPage() {
       {/* Navigation */}
       <nav className="border-b border-foreground/10 backdrop-blur-sm sticky top-0 z-50">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
-          <div className="text-xl font-bold text-foreground">Clarity AI</div>
+          <img src="/logo.svg" alt="Clarity AI Logo" className="h-12 w-auto" />
           <div className="flex gap-3">
             <Link
               href="/auth/login"

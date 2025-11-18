@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Mail, CheckCircle2, Loader2 } from 'lucide-react'
 import { createClient } from "@/lib/client"
@@ -9,18 +10,24 @@ export default function SignUpSuccessPage() {
   const [isVerified, setIsVerified] = useState(false)
   const [error, setError] = useState("")
   const supabase = createClient()
+  const router = useRouter()
 
   useEffect(() => {
-    const checkVerification = async () => {
-      const { data } = await supabase.auth.getSession()
-      if (data.session) {
-        setIsVerified(true)
+    // Listen for real-time auth state changes (fires instantly when email is verified)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        if (session) {
+          setIsVerified(true)
+          // Redirect to chat after a brief delay to show success message
+          router.push("/chat")
+        }
       }
-    }
+    )
 
-    const interval = setInterval(checkVerification, 2000)
-    return () => clearInterval(interval)
-  }, [supabase])
+    return () => {
+      subscription?.unsubscribe()
+    }
+  }, [supabase, router])
 
   return (
     <main className="min-h-screen bg-gradient-to-br from-background via-background to-background/80 flex items-center justify-center p-4">
@@ -59,7 +66,7 @@ export default function SignUpSuccessPage() {
           </div>
         )}
 
-        {!isVerified && (
+        {/*!isVerified && (
           <div className="border border-foreground/10 rounded-lg p-4 bg-foreground/5 text-sm text-foreground/70 space-y-2">
             <p className="font-medium">Didn't receive the email?</p>
             <ul className="list-disc list-inside space-y-1">
@@ -68,7 +75,7 @@ export default function SignUpSuccessPage() {
               <li>Try signing up again if needed</li>
             </ul>
           </div>
-        )}
+        )*/}
       </div>
     </main>
   )

@@ -47,7 +47,16 @@ export default function SignUpPage() {
       })
 
       if (error) {
-        setError(error.message)
+        // Check for duplicate email error
+        if (
+          error.message.toLowerCase().includes("already registered") ||
+          error.message.toLowerCase().includes("already in use") ||
+          error.message.toLowerCase().includes("user already exists")
+        ) {
+          setError("This email is already registered. Please sign in instead or use a different email.")
+        } else {
+          setError(error.message)
+        }
         return
       }
 

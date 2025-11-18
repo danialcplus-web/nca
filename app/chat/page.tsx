@@ -17,7 +17,7 @@ export interface Chat {
 }
 
 const INITIAL_MESSAGE = {
-  id: "1",
+  id: "0",
   role: "assistant" as const,
   content: "Hello! I'm your OpenAI Agent. How can I help you today?",
 }
