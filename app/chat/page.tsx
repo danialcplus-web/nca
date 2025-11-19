@@ -103,15 +103,17 @@ export default function ChatPage() {
   const handleSendMessage = async (content: string) => {
     if (!currentChat) return
 
+    // Create the user message object once so we can both update state
+    // optimistically and include the exact same message in the request payload.
+    const userMessage = {
+      id: Date.now().toString(),
+      role: "user" as const,
+      content,
+    }
+
     setChats((prev) =>
       prev.map((chat) => {
         if (chat.id === currentChatId) {
-          const userMessage = {
-            id: Date.now().toString(),
-            role: "user" as const,
-            content,
-          }
-
           const updatedMessages = [...chat.messages, userMessage]
 
           const updatedChat = { ...chat, messages: updatedMessages }
@@ -140,14 +142,14 @@ export default function ChatPage() {
           throw new Error("NEXT_PUBLIC_FASTAPI_URL is not configured")
         }
 
-        const response = await fetch(`${fastApiUrl}/api/chat`, {
+        // Build the messages payload including the newly created userMessage
+        const messagesPayload = (currentChat?.messages ?? []).concat(userMessage)
+
+        const response = await fetch(`${fastApiUrl}/chat`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ 
-            messages: currentChat.messages.map(msg => ({
-              role: msg.role,
-              content: msg.content
-            }))
+            messages: messagesPayload.map(msg => ({ role: msg.role, content: msg.content }))
           }),
         })
 
