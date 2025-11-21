@@ -43,7 +43,7 @@ export async function sendMessageToChatKit(message: string, sessionId: string) {
       throw new Error("NEXT_PUBLIC_FASTAPI_URL is not defined")
     }
     
-    console.log("[v0] Sending to:", `${backendUrl}/api/chatkit/message`)
+    console.log("Sending to:", `${backendUrl}/api/chatkit/message`)
     
     const response = await fetch(`${backendUrl}/api/chatkit/message`, {
       method: "POST",
@@ -58,7 +58,7 @@ export async function sendMessageToChatKit(message: string, sessionId: string) {
 
     if (!response.ok) {
       const errorText = await response.text()
-      console.error("[v0] ChatKit message error response:", errorText)
+      console.error("ChatKit message error response:", errorText)
       throw new Error(`Failed to send message: ${response.status} - ${errorText.substring(0, 100)}`)
     }
 
@@ -67,13 +67,13 @@ export async function sendMessageToChatKit(message: string, sessionId: string) {
       data = await response.json()
     } catch (jsonError) {
       const text = await response.text()
-      console.error("[v0] Failed to parse JSON response:", text)
+      console.error("Failed to parse JSON response:", text)
       throw new Error(`Invalid JSON response from server: ${text.substring(0, 100)}`)
     }
     
     return data.response || data.message || "Request processed"
   } catch (error) {
-    console.error("[v0] Error sending message to ChatKit:", error)
+    console.error("Error sending message to ChatKit:", error)
     throw error
   }
 }

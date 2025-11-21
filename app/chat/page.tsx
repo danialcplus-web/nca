@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect,useRef } from "react"
 import ChatWindow from "@/components/chat-window"
 import ChatInput from "@/components/chat-input"
 import Sidebar from "@/components/sidebar"
@@ -8,6 +8,13 @@ import { Menu, X } from 'lucide-react'
 import { createClient } from "@/lib/client"
 import { useRouter } from 'next/navigation'
 import { initializeChatKitSession, sendMessageToChatKit } from "@/lib/chatkit-client"
+import { DragDropOverlay } from "@/components/chat/drag-drop-overlay"
+import { DocumentBadge } from "@/components/chat/document-badge"
+
+
+
+
+
 
 export interface Chat {
   id: string
@@ -22,17 +29,32 @@ const INITIAL_MESSAGE = {
   content: "Hello! I'm your OpenAI Agent. How can I help you today?",
 }
 
+// Uploaded document type
+type UploadedDocument = {
+  name: string
+  type: string
+  size: number
+}
+
+
+
 export default function ChatPage() {
   const router = useRouter()
   const supabase = createClient()
   const [chats, setChats] = useState<Chat[]>([])
+  const [isUploading, setIsUploading] = useState(false)
   const [currentChatId, setCurrentChatId] = useState<string>("")
   const [isLoading, setIsLoading] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [user, setUser] = useState<any>(null)
   const [chatKitReady, setChatKitReady] = useState(false)
   const [sessionId, setSessionId] = useState<string>("")
-
+  const [uploadedDoc, setUploadedDoc] = useState<UploadedDocument | null>(null)
+  const [isDragging, setIsDragging] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  
+  
+  
   // Check authentication
   useEffect(() => {
     const checkAuth = async () => {
@@ -215,6 +237,93 @@ export default function ChatPage() {
     }
   }
 
+   /* const processFile = async (file: File) => {
+    const fileType = file.name.split(".").pop()?.toLowerCase()
+    if (!["pdf", "doc", "docx", "txt"].includes(fileType || "")) {
+      alert("Please upload a PDF, DOC, or TXT file")
+      return
+    }
+
+    setIsUploading(true)
+
+    try {
+      const formData = new FormData()
+      formData.append("file", file)
+      formData.append("file_type", fileType || "")
+      formData.append("title", file.name)
+
+      const response = await fetch("http://localhost:8001/upload", {
+        method: "POST",
+        body: formData,
+      })
+
+      if (!response.ok) throw new Error("Upload failed")
+
+      const data = await response.json()
+
+      setUploadedDoc({
+        name: file.name,
+        type: fileType || "",
+        size: file.size,
+      })
+
+    /* const docMessage: chats = {
+        id: Date.now().toString(),
+        role: "assistant",
+        content: `Document "${file.name}" uploaded successfully. You can now ask questions about it.`,
+        documentName: file.name,
+      }
+      setChats((prev) => [...prev, docMessage])
+    } catch (error) {
+      console.error("Upload error:", error)
+      alert("Failed to upload document. Please try again.")
+    } finally {
+      setIsUploading(false)
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ""
+      }
+    }
+  }
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    await processFile(file)
+  }
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDragging(true)
+  }
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDragging(false)
+  }
+
+  const handleDrop = async (e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDragging(false)
+
+    const file = e.dataTransfer.files?.[0]
+    if (file) {
+      await processFile(file)
+    }
+  
+  }
+  
+  const handleRemoveDocument = () => {
+    setUploadedDoc(null)
+  }
+  const handleUploadClick = () => {
+    fileInputRef.current?.click()
+  }
+*/
+
+
   const handleLogout = async () => {
     await supabase.auth.signOut()
     router.push("/")
@@ -255,8 +364,9 @@ export default function ChatPage() {
       )}
 
       {/* Main chat area */}
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col" >        {/*onDragOver={handleDragOver} onDragLeave={handleDragLeave} onDrop={handleDrop}*/}
         <div className="lg:hidden border-b border-border bg-background px-3 sm:px-4 py-3 flex items-center justify-between">
+          <DragDropOverlay isVisible={isDragging} />
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
             className="p-2 hover:bg-foreground/5 rounded-lg transition-colors"
