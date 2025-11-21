@@ -8,8 +8,8 @@ import { Menu, X } from 'lucide-react'
 import { createClient } from "@/lib/client"
 import { useRouter } from 'next/navigation'
 import { initializeChatKitSession, sendMessageToChatKit } from "@/lib/chatkit-client"
-//import { DragDropOverlay } from "@/components/chat/drag-drop-overlay"
-//import { DocumentBadge } from "@/components/chat/document-badge"
+import { DragDropOverlay } from "@/components/chat/drag-drop-overlay"
+import { DocumentBadge } from "@/components/chat/document-badge"
 
 
 
