@@ -35,7 +35,7 @@ export async function initializeChatKitSession() {
 }
 
 // Send message through ChatKit
-export async function sendMessageToChatKit(message: string, sessionId: string) {
+export async function sendMessageToChatKit(message: string, sessionId: string, userId: string) {
   try {
     const backendUrl = process.env.NEXT_PUBLIC_FASTAPI_URL
     
@@ -43,9 +43,9 @@ export async function sendMessageToChatKit(message: string, sessionId: string) {
       throw new Error("NEXT_PUBLIC_FASTAPI_URL is not defined")
     }
     
-    console.log("Sending to:", `${backendUrl}/api/chatkit/message`)
+    console.log("Sending to:", `${backendUrl}/agent/answer`)
     
-    const response = await fetch(`${backendUrl}/api/chatkit/message`, {
+    const response = await fetch(`${backendUrl}/agent/answer`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -53,6 +53,7 @@ export async function sendMessageToChatKit(message: string, sessionId: string) {
       body: JSON.stringify({
         content: message,
         session_id: sessionId,
+        user_id: userId,
       }),
     })
 

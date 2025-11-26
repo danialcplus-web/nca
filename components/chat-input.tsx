@@ -4,6 +4,7 @@ import type React from "react"
 import { useState, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Send, Plus, X } from "lucide-react"
+import { createClient } from "@/lib/client"
 // import { Session } from "@supabase/supabase-js" // Not needed for test
 
 interface ChatInputProps {
@@ -24,7 +25,7 @@ export default function ChatInput({ onAttach, onSendMessage, disabled }: ChatInp
   const [input, setInput] = useState("")
   const [uploads, setUploads] = useState<UploadProgress[]>([])
   const fileInputRef = useRef<HTMLInputElement>(null)
-
+  const supabase = createClient()
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (input.trim() && !disabled) {
@@ -36,12 +37,13 @@ export default function ChatInput({ onAttach, onSendMessage, disabled }: ChatInp
   const uploadFile = async (file: File) => {
     // Skip JWT/session check
     // if (!session?.access_token) { ... } 
+    const { data: { user } } = await supabase.auth.getUser()
+    const userId = user?.id || "guest"
 
     const formData = new FormData()
     formData.append('file', file)
-    // formData.append('file_type', file.type || 'txt') // optional
-    // formData.append('filename', file.name) // optional
-
+    formData.append("user_id", userId)   //  Send user_id with upload
+    
     setUploads(prev => [...prev, {
       filename: file.name,
       progress: 0,
@@ -53,8 +55,7 @@ export default function ChatInput({ onAttach, onSendMessage, disabled }: ChatInp
 
       // JWT header removed for testing
       xhr.open('POST', `${process.env.NEXT_PUBLIC_FASTAPI_URL}/documents/upload`)
-      // xhr.setRequestHeader("Authorization", `Bearer ${session.access_token}`) // COMMENTED OUT
-
+      
       xhr.upload.addEventListener('progress', (e) => {
         if (e.lengthComputable) {
           const percentComplete = (e.loaded / e.total) * 100
