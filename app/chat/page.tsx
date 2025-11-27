@@ -9,7 +9,7 @@ import { createClient } from "@/lib/client"
 import { useRouter } from 'next/navigation'
 import { initializeChatKitSession, sendMessageToChatKit } from "@/lib/chatkit-client"
 import { DragDropOverlay } from "@/components/chat/drag-drop-overlay"
-import { DocumentBadge } from "@/components/chat/document-badge"
+
 
 
 
@@ -74,26 +74,6 @@ export default function ChatPage() {
     checkAuth()
   }, [supabase, router])
 
-
-
-   // Check authentication
-  // useEffect(() => {
-  //   const checkUser = async () => {
-  //     const { data } = await supabase.auth.getUser()
-  //     if (!data.user) {
-  //       console.log("No user data found");
-  //       return
-  //     }
-  //     setUser(data.user) 
-  //     console.log(user, "User Console in UGet User functin")
-
-  //   }
-
-  //   checkUser()
-  // }, [supabase])
-  
-//const user_data = use(supabase.auth.getUser());
-//console.log("User data:", user_data);
 
   // Initialize from localStorage
   useEffect(() => {
