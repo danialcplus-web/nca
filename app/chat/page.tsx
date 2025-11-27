@@ -209,7 +209,7 @@ const handleSendMessage = async (content: string) => {
             }
           }
           return chat
-        }),
+        }),                                                                                                                                                                                                                                                                                                                                                                                                                                                         
       )
     } catch (error) {
       console.error("[v0] Error sending message:", error)
@@ -313,3 +313,4 @@ const handleSendMessage = async (content: string) => {
     </main>
   )
 }
+//end of file
