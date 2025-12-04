@@ -24,6 +24,8 @@ interface UploadProgress {
 export default function ChatInput({ onAttach, onSendMessage, disabled }: ChatInputProps) {
   const [input, setInput] = useState("")
   const [uploads, setUploads] = useState<UploadProgress[]>([])
+  const [pendingFiles, setPendingFiles] = useState<File[]>([])
+  const [descriptions, setDescriptions] = useState<Record<string, string>>({})
   const fileInputRef = useRef<HTMLInputElement>(null)
   const supabase = createClient()
   const handleSubmit = (e: React.FormEvent) => {
@@ -34,15 +36,17 @@ export default function ChatInput({ onAttach, onSendMessage, disabled }: ChatInp
     }
   }
 
-  const uploadFile = async (file: File) => {
+  const uploadFile = async (file: File, description?: string) => {
     // Skip JWT/session check
     // if (!session?.access_token) { ... } 
     const { data: { user } } = await supabase.auth.getUser()
     const userId = user?.id || "guest"
+    const desc = description ?? (input.substring(0, 100)) // optional provided description or fallback
 
     const formData = new FormData()
     formData.append('file', file)
-    formData.append("user_id", userId)   //  Send user_id with upload
+    formData.append("user_id", userId)
+    formData.append("description", desc)
     
     setUploads(prev => [...prev, {
       filename: file.name,
@@ -108,10 +112,54 @@ export default function ChatInput({ onAttach, onSendMessage, disabled }: ChatInp
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       const files = Array.from(e.target.files)
+      // Hold files in pending state and prompt user for optional descriptions
+      setPendingFiles(files)
+      // initialize empty descriptions for each file
+      const initial: Record<string, string> = {}
+      files.forEach(f => (initial[f.name] = ""))
+      setDescriptions(initial)
       onAttach?.(files)
-      files.forEach(file => uploadFile(file))
       if (fileInputRef.current) fileInputRef.current.value = ""
     }
+  }
+
+  const startUploadPending = () => {
+    pendingFiles.forEach((file) => {
+      const desc = descriptions[file.name]
+      uploadFile(file, desc)
+    })
+    setPendingFiles([])
+    setDescriptions({})
+  }
+
+  const cancelPending = () => {
+    setPendingFiles([])
+    setDescriptions({})
+  }
+
+  const updateDescription = (filename: string, value: string) => {
+    setDescriptions((prev) => ({ ...prev, [filename]: value }))
+  }
+
+  const uploadSinglePending = (file: File) => {
+    const desc = descriptions[file.name]
+    uploadFile(file, desc)
+    // remove from pending
+    setPendingFiles((prev) => prev.filter((f) => f.name !== file.name))
+    setDescriptions((prev) => {
+      const copy = { ...prev }
+      delete copy[file.name]
+      return copy
+    })
+  }
+
+  const removePendingFile = (file: File) => {
+    setPendingFiles((prev) => prev.filter((f) => f.name !== file.name))
+    setDescriptions((prev) => {
+      const copy = { ...prev }
+      delete copy[file.name]
+      return copy
+    })
   }
 
   const removeUpload = (filename: string) => {
@@ -157,6 +205,39 @@ export default function ChatInput({ onAttach, onSendMessage, disabled }: ChatInp
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Pending files - ask user for optional descriptions before upload */}
+      {pendingFiles.length > 0 && (
+        <div className="px-3 sm:px-4 md:px-6 py-3 space-y-3 border-b border-border bg-muted/5">
+          <div className="flex items-center justify-between">
+            <div className="text-sm font-medium">Files ready to upload</div>
+            <div className="flex items-center gap-2">
+              <Button size="sm" onClick={startUploadPending} className="px-3">Upload All</Button>
+              <Button size="sm" variant="ghost" onClick={cancelPending} className="px-3">Cancel</Button>
+            </div>
+          </div>
+          <div className="space-y-2">
+            {pendingFiles.map((file) => (
+              <div key={file.name} className="flex items-start gap-3">
+                <div className="w-32 text-sm truncate mt-1">{file.name}</div>
+                <div className="flex-1">
+                  <input
+                    type="text"
+                    value={descriptions[file.name] ?? ""}
+                    onChange={(e) => updateDescription(file.name, e.target.value)}
+                    placeholder="Optional description (shown with the file)"
+                    className="w-full rounded-md border px-2 py-1 text-sm"
+                  />
+                  <div className="mt-1 flex gap-2">
+                    <Button size="sm" onClick={() => uploadSinglePending(file)}>Upload</Button>
+                    <Button size="sm" variant="ghost" onClick={() => removePendingFile(file)}>Remove</Button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
