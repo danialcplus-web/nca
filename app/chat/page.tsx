@@ -9,6 +9,7 @@ import { createClient } from "@/lib/client";
 import { useRouter } from "next/navigation";
 import { initializeChatKitSession, sendMessageToChatKit } from "@/lib/chatkit-client";
 import { DragDropOverlay } from "@/components/chat/drag-drop-overlay";
+import ExportPptButton from "@/components/export-ppt-button"
 
 export interface Chat {
   id: string;
@@ -21,7 +22,7 @@ export interface Chat {
 const INITIAL_MESSAGE = {
   id: "0",
   role: "assistant" as const,
-  content: "Hello! I'm your OpenAI Agent. How can I help you today?",
+  content: "Hello! I'm your New clarity Agent. How can I help you today?",
 };
 
 export default function ChatPage() {
@@ -84,7 +85,7 @@ export default function ChatPage() {
         id: c.id,
         title: c.title,
         messages: c.messages || [],
-        createdAt: new Date(c.created_at),
+        createdAt: new Date(c.created_at).toISOString(),
       }));
 
       setChats(mapped);
@@ -119,7 +120,7 @@ export default function ChatPage() {
         id: chatRow.id,
         title: chatRow.title,
         messages: chatRow.messages || [],
-        createdAt: new Date(chatRow.created_at),
+        createdAt: new Date(chatRow.created_at).toISOString(),
       };
 
       setChats((prev) => [newChat, ...prev]);
@@ -215,6 +216,55 @@ export default function ChatPage() {
 
   const handleNewChatClick = () => createNewChat();
 
+  const [exporting, setExporting] = useState(false)
+  const [exportError, setExportError] = useState<string | null>(null)
+
+  const exportPpt = async () => {
+    setExportError(null)
+    if (!currentChatId) {
+      setExportError("No chat selected to export.")
+      return
+    }
+    setExporting(true)
+    try {
+      const fastApiUrl = process.env.NEXT_PUBLIC_FASTAPI_URL
+      if (!fastApiUrl) throw new Error("NEXT_PUBLIC_FASTAPI_URL is not configured")
+
+      const res = await fetch(`${fastApiUrl}/chat/export/pptx`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ chat_id: currentChatId }),
+      })
+
+      if (!res.ok) {
+        const text = await res.text().catch(() => "")
+        throw new Error(text || `Export failed with status ${res.status}`)
+      }
+
+      const blob = await res.blob()
+      let outName = `chat_export_${new Date().toISOString().replace(/[:.]/g, "-")}.pptx`
+      const cd = res.headers.get("content-disposition")
+      if (cd) {
+        const m = /filename\s*=\s*"?([^\";]+)"?/i.exec(cd)
+        if (m && m[1]) outName = m[1]
+      }
+
+      const blobUrl = URL.createObjectURL(blob)
+      const a = document.createElement("a")
+      a.href = blobUrl
+      a.download = outName
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+      URL.revokeObjectURL(blobUrl)
+    } catch (err: any) {
+      console.error("Export PPTX failed:", err)
+      setExportError(err?.message || "Export failed")
+    } finally {
+      setExporting(false)
+    }
+  }
+
   return (
     <main className="flex h-screen bg-background overflow-hidden">
       <div className="group hidden lg:flex">
@@ -247,7 +297,7 @@ export default function ChatPage() {
       )}
 
       {/* Main chat area */}
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col relative">
         <div className="lg:hidden border-b border-border bg-background px-3 sm:px-4 py-3 flex items-center justify-between">
           <DragDropOverlay isVisible={isDragging} />
           <button onClick={() => setSidebarOpen(!sidebarOpen)} className="p-2 hover:bg-foreground/5 rounded-lg transition-colors">
@@ -259,6 +309,14 @@ export default function ChatPage() {
 
         {currentChat && (
           <>
+            <div className="absolute top-4 right-4 z-20 flex items-center gap-2 bg-background/80 backdrop-blur-sm rounded-md p-2 border border-border">
+              {/* clickable SVG will be added by you at public/ppt.svg — clicking it triggers exportPpt */}
+             
+                
+               
+              <ExportPptButton chatId={currentChatId} onClick={exportPpt} className="hidden sm:block" />
+              {exportError && <div className="text-sm text-red-600">{exportError}</div>}
+            </div>
             <ChatWindow messages={currentChat.messages} isLoading={isLoading} />
             <ChatInput onSendMessage={handleSendMessage} disabled={isLoading} />
           </>

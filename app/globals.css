@@ -74,6 +74,16 @@
   --sidebar-ring: oklch(0.439 0 0);
 }
 
+
+
+@font-face {
+  font-family: "MyFont";
+  src: url("/fonts/MyFont.woff2") format("woff2");
+  font-weight: normal;
+  font-style: normal;
+}
+
+
 @theme inline {
   --font-sans: 'Geist', 'Geist Fallback';
   --font-mono: 'Geist Mono', 'Geist Mono Fallback';

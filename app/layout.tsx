@@ -3,7 +3,7 @@ import type { Metadata } from 'next'
 import { Analytics } from '@vercel/analytics/next'
 import './globals.css'
 
-import { Geist_Mono, Geist_Mono as V0_Font_Geist_Mono } from 'next/font/google'
+import {  Geist_Mono as V0_Font_Geist_Mono } from 'next/font/google'
 
 // Initialize fonts
 const _geistMono = V0_Font_Geist_Mono({ subsets: ['latin'], weight: ["100","200","300","400","500","600","700","800","900"] })
@@ -37,7 +37,14 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`font-sans antialiased`}>
+      <head>
+        <style>
+        @import url('https://fonts.googleapis.com/css2?family=Urbanist:ital,wght@0,100..900;1,100..900&display=swap');
+        </style>
+      </head>
+      
+      
+      <body className={`font- antialiased`}>
         {children}
         <Analytics />
       </body>
